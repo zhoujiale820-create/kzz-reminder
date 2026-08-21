@@ -1,0 +1,36 @@
+name: 新债申购提醒
+
+on:
+  schedule:
+    # UTC 02:00 = 北京时间 10:00
+    - cron: '0 2 * * 1-5'
+    # UTC 06:00 = 北京时间 14:00
+    - cron: '0 6 * * 1-5'
+  workflow_dispatch:  # 允许手动触发测试
+
+permissions:
+  contents: read
+
+jobs:
+  check-bonds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: 安装依赖
+        run: |
+          pip install akshare requests
+
+      - name: 检查并推送新债提醒
+        env:
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: python kzz_remind_cloud.py
