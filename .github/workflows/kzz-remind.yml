@@ -2,11 +2,9 @@ name: 新债申购提醒
 
 on:
   schedule:
-    # UTC 02:00 = 北京时间 10:00
-    - cron: '0 2 * * 1-5'
-    # UTC 06:00 = 北京时间 14:00
-    - cron: '0 6 * * 1-5'
-  workflow_dispatch:  # 允许手动触发测试
+    # UTC 02:40 = 北京时间 10:40
+    - cron: "40 2 * * 1-5"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -22,12 +20,11 @@ jobs:
       - name: 安装 Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          python-version: "3.12"
+          cache: "pip"
 
       - name: 安装依赖
-        run: |
-          pip install akshare requests
+        run: pip install -r requirements.txt
 
       - name: 检查并推送新债提醒
         env:
