@@ -100,6 +100,11 @@ def send_wechat(title, content):
 
 def main():
     now = datetime.datetime.now()
+    # 时间门控：只允许北京时间 10:30-11:00 之间推送
+    # 防止 GitHub Actions 积压延迟在错误时间触发
+    if not (10 <= now.hour < 11):
+        print(f"[{now.strftime('%H:%M')}] 不在推送窗口(10:00-11:00)，静默退出。")
+        sys.exit(0)
     print(f"[{now.strftime('%Y-%m-%d %H:%M:%S')}] 开始检查今日新债...")
 
     bonds = fetch_today_bonds()
