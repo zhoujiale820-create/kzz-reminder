@@ -3,7 +3,7 @@ name: 新债申购提醒
 on:
   schedule:
     # 每5分钟检查一次（工作日 00:00-23:59 UTC），脚本内做时间门控
-    - cron: "*/5 * * * 1-5"
+    - cron: "40 2 * * 1-5"
   workflow_dispatch:
 
 permissions:
