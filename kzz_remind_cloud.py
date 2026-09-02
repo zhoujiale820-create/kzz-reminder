@@ -104,7 +104,7 @@ def main():
     # 北京时间 10:00-11:00 = UTC 02:00-03:00
     # 只在这个窗口内允许推送，防止积压延迟在错误时间触发
     utc_hour = now.hour
-    if not (3 <= utc_hour < 4):
+    if not (2 <= utc_hour < 3):
         print(f"[{now.strftime('%H:%M')} UTC] 不在推送窗口(UTC 02:00-03:00 = 北京时间10:00-11:00)，静默退出。")
         sys.exit(0)
     print(f"[{now.strftime('%Y-%m-%d %H:%M:%S')}] 开始检查今日新债...")
