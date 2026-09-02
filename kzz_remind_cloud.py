@@ -100,10 +100,12 @@ def send_wechat(title, content):
 
 def main():
     now = datetime.datetime.now()
-    # 时间门控：只允许北京时间 10:30-11:00 之间推送
-    # 防止 GitHub Actions 积压延迟在错误时间触发
-    if not (10 <= now.hour < 11):
-        print(f"[{now.strftime('%H:%M')}] 不在推送窗口(10:00-11:00)，静默退出。")
+    # 时间门控：GitHub Actions 运行环境是 UTC
+    # 北京时间 10:00-11:00 = UTC 02:00-03:00
+    # 只在这个窗口内允许推送，防止积压延迟在错误时间触发
+    utc_hour = now.hour
+    if not (2 <= utc_hour < 3):
+        print(f"[{now.strftime('%H:%M')} UTC] 不在推送窗口(UTC 02:00-03:00 = 北京时间10:00-11:00)，静默退出。")
         sys.exit(0)
     print(f"[{now.strftime('%Y-%m-%d %H:%M:%S')}] 开始检查今日新债...")
 
