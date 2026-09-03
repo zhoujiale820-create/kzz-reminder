@@ -104,8 +104,10 @@ def main():
     # 北京时间 10:00-11:00 = UTC 02:00-03:00
     # 只在这个窗口内允许推送，防止积压延迟在错误时间触发
     utc_hour = now.hour
-    if not (2 <= utc_hour < 3):
-        print(f"[{now.strftime('%H:%M')} UTC] 不在推送窗口(UTC 02:00-03:00 = 北京时间10:00-11:00)，静默退出。")
+    # 放宽窗口：UTC 00:00-04:00 = 北京时间 08:00-12:00
+    # GitHub schedule 不准时，只要在上午交易时段内都允许推送
+    if not (0 <= utc_hour < 4):
+        print(f"[{now.strftime('%H:%M')} UTC] 不在上午推送窗口(UTC 00:00-04:00)，静默退出。")
         sys.exit(0)
     print(f"[{now.strftime('%Y-%m-%d %H:%M:%S')}] 开始检查今日新债...")
 
