@@ -103,12 +103,18 @@ def main():
     # 时间门控：GitHub Actions 运行环境是 UTC
     # 北京时间 10:00-11:00 = UTC 02:00-03:00
     # 只在这个窗口内允许推送，防止积压延迟在错误时间触发
-    utc_hour = now.hour
-    # 放宽窗口：UTC 00:00-04:00 = 北京时间 08:00-12:00
-    # GitHub schedule 不准时，只要在上午交易时段内都允许推送
-    if not (0 <= utc_hour < 4):
-        print(f"[{now.strftime('%H:%M')} UTC] 不在上午推送窗口(UTC 00:00-04:00)，静默退出。")
-        sys.exit(0)
+    # 时间门控已移除：由 Windows 任务计划(10:35 BJ)作为唯一触发器
+    # 确保每天只推一次
+    today_str = now.strftime('%Y-%m-%d')
+    state_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.kzz_push_state')
+    try:
+        if os.path.exists(state_file):
+            with open(state_file, 'r') as f:
+                if f.read().strip() == today_str:
+                    print(f'今天 ({today_str}) 已推送过，跳过重复。')
+                    sys.exit(0)
+    except Exception:
+        pass
     print(f"[{now.strftime('%Y-%m-%d %H:%M:%S')}] 开始检查今日新债...")
 
     bonds = fetch_today_bonds()
