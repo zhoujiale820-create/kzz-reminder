@@ -14,8 +14,6 @@ import requests
 FEISHU_WEBHOOK  = os.environ.get("FEISHU_WEBHOOK", "").strip()
 PUSHPLUS_TOKEN  = os.environ.get("PUSHPLUS_TOKEN", "").strip()
 
-# 推送时间点 (24h), 用于日志
-PUSH_HOURS = [10, 14]
 WECHAT_TITLE = "📢 今日新债申购提醒"
 
 
@@ -100,21 +98,20 @@ def send_wechat(title, content):
 
 def main():
     now = datetime.datetime.now()
-    # 时间门控：GitHub Actions 运行环境是 UTC
-    # 北京时间 10:00-11:00 = UTC 02:00-03:00
-    # 只在这个窗口内允许推送，防止积压延迟在错误时间触发
-    # 时间门控已移除：由 Windows 任务计划(10:35 BJ)作为唯一触发器
-    # 确保每天只推一次
     today_str = now.strftime('%Y-%m-%d')
+
+    # 每日去重：只推送一次
     state_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.kzz_push_state')
     try:
         if os.path.exists(state_file):
             with open(state_file, 'r') as f:
-                if f.read().strip() == today_str:
-                    print(f'今天 ({today_str}) 已推送过，跳过重复。')
-                    sys.exit(0)
+                last_date = f.read().strip()
+            if last_date == today_str:
+                print(f'今天 ({today_str}) 已推送过，跳过重复。')
+                sys.exit(0)
     except Exception:
         pass
+
     print(f"[{now.strftime('%Y-%m-%d %H:%M:%S')}] 开始检查今日新债...")
 
     bonds = fetch_today_bonds()
@@ -123,15 +120,21 @@ def main():
 
     # 推送到所有已配置的渠道
     results = []
+    pushed = False
+
     if FEISHU_WEBHOOK:
         ok, info = send_feishu(msg)
         results.append(f"{'✅' if ok else '❌'} 飞书: {info}")
         print(f"飞书推送: {info}")
+        if ok:
+            pushed = True
 
     if PUSHPLUS_TOKEN:
         ok, info = send_wechat(WECHAT_TITLE, msg)
         results.append(f"{'✅' if ok else '❌'} 微信: {info}")
         print(f"微信推送: {info}")
+        if ok:
+            pushed = True
 
     if not FEISHU_WEBHOOK and not PUSHPLUS_TOKEN:
         msg_warn = "⚠️ 未配置任何推送渠道！请在 GitHub Secrets 中设置 FEISHU_WEBHOOK 或 PUSHPLUS_TOKEN"
@@ -139,6 +142,15 @@ def main():
         sys.exit(1)
 
     print(" | ".join(results))
+
+    # 推送成功后写入去重标记（只有至少一个渠道成功才标记）
+    if pushed:
+        try:
+            with open(state_file, 'w') as f:
+                f.write(today_str)
+            print(f"[{now.strftime('%Y-%m-%d %H:%M:%S')}] 已写入推送标记: {today_str}")
+        except Exception as e:
+            print(f"写入推送标记失败: {e}")
 
 
 if __name__ == "__main__":
